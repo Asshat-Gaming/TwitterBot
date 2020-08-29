@@ -1,0 +1,9 @@
+version: "2"
+
+services:
+
+  app:
+    image: dbkynd/twitter-to-discord
+    restart: always
+    env_file:
+      - .env
