@@ -69,7 +69,7 @@ module.exports = async (bot, message) => {
 			{
 				method: 'POST',
 				headers: {
-					'Authorization': `${rest.tokenPrefix} ${process.env.BOT_TOKEN}`,
+					'Authorization': `${rest.tokenPrefix} ${process.env.DISCORD_BOT_TOKEN}`,
 				},
 			},
 		)
