@@ -1,7 +1,5 @@
-const client = require('../bin/discord.js');
-
-module.exports = async bot => {
-	const { config, plogger } = bot;
+module.exports = async client => {
+	const { config, plogger } = client;
 
 	plogger.log('Connected!', 'ready');
 

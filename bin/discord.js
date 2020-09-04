@@ -43,36 +43,36 @@ process.on('unhandledRejection', (error) => {
 });
 
 // Discord has disconnected
-client.on('disconnect', () => {
-  logger.warn('discord: disconnected');
+client.on('shardDisconnect', (event, shardID) => {
+  logger.warn('Discord: Disconnected from shard.');
 });
 
 // Discord general warning
 client.on('warn', info => {
-  logger.warn('discord: warning');
+  logger.warn('Discord: Warning');
   logger.warn(info);
 });
 
 // Discord is reconnecting
-client.on('reconnecting', () => {
-  logger.info('discord: reconnecting');
+client.on('shardReconnecting', id => {
+  logger.info(`Discord: Reconnecting to shared with ID ${id}.`);
 });
 
 // Discord has resumed
-client.on('resumed', replayed => {
-  logger.info(`discord: resumed, replayed ${replayed} item(s)`);
+client.on('shardResume', (replayed, shardID) => {
+  logger.info(`Discord: Shard ID ${sharedID} resumed connection and replayed ${replayed} item(s)`);
 });
 
 // Discord has erred
 client.on('error', err => {
-  logger.error('discord: error:');
+  logger.error('Discord: Error:');
   logger.error(err);
 });
 
 client.on('ready', () => {
-  logger.info('discord: connection success');
-  logger.info(`discord: connected as '${client.user.username}'`);
-  logger.info(`discord: command prefix: ${process.env.DISCORD_CMD_PREFIX}`);
+  logger.info('Discord: Connection success');
+  logger.info(`Discord: Connected as '${client.user.username}'`);
+  logger.info(`Discord: Command prefix: ${process.env.DISCORD_CMD_PREFIX}`);
   client.user.setPresence({
       status: "online",  //You can show online, idle....
   });
@@ -135,8 +135,8 @@ myEvents.on('discord_notify', () => {
     // Ensure that this entry is in the list of currently streamed ids
     if (state.ids.includes(entry.twitter_id)) {
       // Get the discord cached data now in case something was changed between being added and now
-      const user = client.users.get(entry.user_id);
-      const channel = client.channels.get(entry.channel_id);
+      const user = client.users.cache.get(entry.user_id);
+      const channel = client.channels.cache.get(entry.channel_id);
       // Ensure we have a user and a channel to post to
       if (user && channel) {
         channel.send(`${user}, The twitter feed for **${entry.screen_name}** has synced and will now be posted to this channel.`).catch(logger.error);
@@ -153,7 +153,7 @@ myEvents.on('discord_send', (tweet, str, files) => {
       // Get channels that exist and we have send message permissions in
       // Mapped into an array of promises
       const channels = data.channels
-        .map(c => client.channels.get(c.channel_id))
+        .map(c => client.channels.cache.get(c.channel_id))
         .filter(c => c && c.permissionsFor(client.user).has('SEND_MESSAGES'))
         .map(c => channelSend(c, str, files));
       if (channels.length === 0) {
@@ -217,12 +217,12 @@ function checkForStaleRecords() {
             validChannels.push(x);
             return;
           }
-          const guild = client.guilds.get(x.guild_id);
+          const guild = client.guilds.cache.get(x.guild_id);
           if (!guild || !guild.available) {
             logger.debug(`the guild ${x.guild_id} does not exist or is unavailable`);
             return;
           }
-          const channel = client.channels.get(x.channel_id);
+          const channel = client.channels.cache.get(x.channel_id);
           if (!channel || !channel.permissionsFor(client.user).has('SEND_MESSAGES')) {
             logger.debug(`the channel ${x.channel_id} does not exist or is unavailable`);
             return;

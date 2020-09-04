@@ -14,7 +14,7 @@ exports.log = (content, type = 'log') => {
 	const types = {
 		log: ['blue'],
 		info: ['magenta'],
-		debug: ['orange'],
+		debug: ['cyan'],
 		ready: ['green'],
 		warn: ['yellow'],
 		error: ['red'],
@@ -22,8 +22,8 @@ exports.log = (content, type = 'log') => {
 
 	const timestamp = `[${moment().format(log.timeFormat)}]`;
 
-	function logType(label, bgColor, textColor = 'white') {
-		return console.log(`${timestamp} ${chalk[textColor][bgColor](label.toUpperCase())} ${content} `);
+	function logType(label, textColor = 'white') {
+		return console.log(`${timestamp} ${chalk[textColor](label.toUpperCase())} ${content} `);
 	}
 
 	if (Object.keys(types).includes(type)) {
