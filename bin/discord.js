@@ -60,7 +60,7 @@ client.on('shardReconnecting', id => {
 
 // Discord has resumed
 client.on('shardResume', (replayed, shardID) => {
-  logger.info(`Discord: Shard ID ${sharedID} resumed connection and replayed ${replayed} item(s)`);
+  logger.info(`Discord: Shard ID ${shardID} resumed connection and replayed ${replayed} item(s)`);
 });
 
 // Discord has erred
