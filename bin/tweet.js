@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const Entities = require('html-entities').AllHtmlEntities;
+const { decode } = require('html-entities');
 const fetch = require('node-fetch');
 const { exec } = require('child_process');
 const logger = require('./logger');
@@ -12,7 +12,6 @@ const myEvents = require('./events');
 
 logger.debug('Loading tweetHandler.js');
 
-const htmlEntities = new Entities();
 const recentTweets = [];
 
 // Process tweets
@@ -81,7 +80,7 @@ module.exports = (tweet, manual) => {
   logger.info(`TWEET: ${tweet.id_str}: https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`);
 
   // Decode html entities in the twitter text string so they appear correctly (&amp)
-  let modifiedText = htmlEntities.decode(text);
+  let modifiedText = decode(text);
 
   // Array to hold picture and gif urls we will extract from extended_entities
   const mediaUrls = [];
