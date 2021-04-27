@@ -40,6 +40,8 @@ envTest(DISCORD_CMD_PREFIX, 'DISCORD_CMD_PREFIX');
 envTest(DISCORD_BOT_OWNER_ID, 'DISCORD_BOT_OWNER_ID');
 envTest(TEMP, 'TEMP');
 
+process.env.TEMP = 'INSERT-TEMP-PATH-HERE';
+
 // Ensure we can access the temp directory
 try {
   fs.accessSync(process.env.TEMP, fs.constants.F_OK);
