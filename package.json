@@ -22,7 +22,7 @@
     "graphicsmagick": "0.0.1",
     "html-entities": "^2.3.2",
     "lodash": "^4.17.21",
-    "moment": "^2.29.2",
+    "moment": "^2.29.4",
     "mongoose": "^5.12.5",
     "node-fetch": "^2.6.7",
     "rimraf": "^3.0.2",
