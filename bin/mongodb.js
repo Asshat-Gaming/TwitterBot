@@ -1,9 +1,10 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const logger = require('./logger');
 
-logger.debug('Loading mongodb.js');
+if (debugmessage == true) {
+  console.log(`${global.debugstring}Loading mongodb.js`);
+}
 
 // Kill the process if the mongodb has a connection error within the first few seconds of launch
 // Likely this is a format error with the MONGO_URI
@@ -12,34 +13,32 @@ const haltTimer = setTimeout(() => {
 
 // When successfully connected
 mongoose.connection.on('connected', () => {
-  logger.info('mongodb: connection success');
-  logger.debug('stopping mongodb haltTimer');
+  console.log(`${global.infostring}Mongodb: connection success`);
+  if (debugmessage == true) {
+    console.log(`${global.debugstring}Stopping mongodb haltTimer`);
+  }
   if (haltTimer) clearTimeout(haltTimer);
 });
 
 // If the connection throws an error
 mongoose.connection.on('error', err => {
-  logger.error('mongodb: connection error');
-  logger.error(err);
+  console.log(`${global.errorstring}Mongodb: connection error`);
+  console.log(global.errorstring + err);
   if (haltTimer) {
-    logger.error('Error connecting to the mongodb in a timely manor. Please check the \'MONGO_URI\' for format/credential errors');
+    console.log(`${global.errorstring}Error connecting to the mongodb in a timely manor. Please check the \'MONGO_URI\' for format/credential errors`);
     process.exit(1);
   }
 });
 
 // When the connection is disconnected
 mongoose.connection.on('disconnected', () => {
-  logger.warn('mongodb: connection disconnected');
+  console.log(`${global.warnstring}Mongodb: connection disconnected`);
 });
 
 // Connect
-logger.info('mongodb: connecting...');
+console.log(`${global.infostring}Mongodb: connecting...`);
 mongoose.connect(process.env.MONGO_URI, {
-  useUnifiedTopology:true,
-  useNewUrlParser: true,
-  keepAlive: 1,
   connectTimeoutMS: 30000,
-})
-  .catch(logger.error);
+});
 
 module.exports = mongoose;

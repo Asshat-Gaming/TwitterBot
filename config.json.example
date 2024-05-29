@@ -1,12 +1,4 @@
 {
-    "log": {
-        "loggingLevel": "log",
-        "timeFormat": "D.M.YYYY. H:mm:ss.SSS",
-        "locale": "en-US"
-    },
     "presenceInterval": 30,
-    "spamThreshold": 15,
-    "serversBlacklist": [
-        ""
-    ]
+    "spamThreshold": 15
 }

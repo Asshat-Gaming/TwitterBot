@@ -1,21 +1,14 @@
 module.exports = async client => {
-	const { config, plogger } = client;
+	const config = client;
 
-	plogger.log('Connected!', 'ready');
+	console.log(`${global.infostring}Discord: Connected!`);
 
 	let totalMembers = 0;
 
-	plogger.log('Calculating total members across all servers.', 'debug');
-	plogger.log('Checking for blacklisted guilds.');
+	console.log(`${global.infostring}Discord: Calculating total members across all servers.`);
 	client.guilds.cache.forEach(guild => {
 		const { name, id, memberCount: members } = guild;
-		if (config.serversBlacklist.includes(id)) {
-			plogger.log(`Blacklisted guild: "${name}" (${id}). Leaving.`);
-			guild.leave();
-		}
-		else {
-			totalMembers += members;
-		}
+		totalMembers += members;
 	});
-	plogger.log(`Publishing on ${client.guilds.cache.size} servers with ${totalMembers.toLocaleString(config.log.locale)} total members.`, 'info');
+	console.log(`${global.infostring}Discord: Publishing on ${client.guilds.cache.size} servers with ${totalMembers} total members.`);
 };

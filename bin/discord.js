@@ -4,7 +4,6 @@ const Discord = require('discord.js');
 const rimraf = require('rimraf');
 const path = require('path');
 const moment = require('moment');
-const logger = require('./logger');
 const commands = require('./commands');
 const FeedsModel = require('./models/feeds');
 const PostsModel = require('./models/posts');
@@ -13,18 +12,19 @@ const state = require('./state');
 const myEvents = require('./events');
 const fs = require('fs');
 
-logger.debug('Loading discordClient.js');
+if (debugmessage == true) {
+  console.log(`${global.debugstring}Loading discordClient.js`);
+}
 
 const client = new Discord.Client({
   disableEveryone: true,
   disabledEvents: [
     'TYPING_START',
   ],
+  intents: 37379,
 });
 
 client.config = require('../config.json');
-client.plogger = require('../modules/logger.js');
-const { plogger } = client;
 
 // Load publishing events
 fs.readdir('C:\\TwitterBot\\events\\', (err, files) => {
@@ -39,44 +39,44 @@ fs.readdir('C:\\TwitterBot\\events\\', (err, files) => {
 });
 
 process.on('unhandledRejection', (error) => {
-	plogger.log(error.message, 'error');
+	console.log(global.infostring + error.message);
 });
 
 // Discord has disconnected
 client.on('shardDisconnect', (event, shardID) => {
-  logger.warn('Discord: Disconnected from shard.');
+  console.log(`${global.warnstring}Discord: Disconnected from shard.`);
 });
 
 // Discord general warning
 client.on('warn', info => {
-  logger.warn('Discord: Warning');
-  logger.warn(info);
+  console.log(`${global.warnstring}Discord: Warning`);
+  console.log(global.warnstring + info);
 });
 
 // Discord is reconnecting
 client.on('shardReconnecting', id => {
-  logger.info(`Discord: Reconnecting to shared with ID ${id}.`);
+  console.log(`${global.infostring}Discord: Reconnecting to shared with ID ${id}.`);
 });
 
 // Discord has resumed
 client.on('shardResume', (replayed, shardID) => {
-  logger.info(`Discord: Shard ID ${shardID} resumed connection and replayed ${replayed} item(s)`);
+  console.log(`${global.infostring}Discord: Shard ID ${shardID} resumed connection and replayed ${replayed} item(s)`);
 });
 
 // Discord has erred
 client.on('error', err => {
-  logger.error('Discord: Error:');
-  logger.error(err);
+  console.log(`${global.errorstring}Discord: Error:`);
+  console.log(global.warnstring + err);
 });
 
 client.on('ready', () => {
-  logger.info('Discord: Connection success');
-  logger.info(`Discord: Connected as '${client.user.username}'`);
-  logger.info(`Discord: Command prefix: ${process.env.DISCORD_CMD_PREFIX}`);
+  console.log(`${global.infostring}Discord: Connection success`);
+  console.log(`${global.infostring}Discord: Connected as '${client.user.username}'`);
+  console.log(`${global.infostring}Discord: Command prefix: ${process.env.DISCORD_CMD_PREFIX}`);
   client.user.setPresence({
-      status: "online",  //You can show online, idle....
-  });
-  client.user.setActivity('news to Discord!', { url: 'https://twitch.tv/asshatgaming', type: 'STREAMING' });
+  activities: [{ name: `news to Discord!`, type: 1, url: `https://twitch.tv/asshatgaming` }],
+  status: 'online',
+});
 });
 
 // Only run the first time the discord client is ready
@@ -87,7 +87,7 @@ client.once('ready', () => {
   setTimeout(checkForStaleRecords, 1000 * 10);
 });
 
-client.on('message', msg => {
+client.on('messageCreate', msg => {
   // Don't listen to other bots
   if (msg.author.bot) return;
   // Exit if the message does not start with the prefix set
@@ -106,22 +106,23 @@ client.on('message', msg => {
   if (msg.cmd !== 'twitter') return;
   // These commands need to be run in a guild text channel to associate the guild id and channel id
   if (msg.channel.type === 'dm') {
-    msg.author.send('This command does not work via DMs. Please run it in a guild\'s text channel.')
-      .catch(logger.error);
+    msg.author.send('This command does not work via DM\'s. Please run it in a guild\'s text channel.');
     return;
   }
-  logger.debug(`DISCORD: [${msg.guild.name}] (#${msg.channel.name}) <${msg.author.tag}>: ${msg.content}`);
+  if (debugmessage == true) {
+    console.log(`${global.debugstring}Discord: [${msg.guild.name}] (#${msg.channel.name}) <${msg.author.tag}>: ${msg.content}`);
+  }
   msg.prefix = process.env.DISCORD_CMD_PREFIX; // eslint-disable-line no-param-reassign
   commands(msg);
 });
 
 module.exports = {
   connect: () => {
-    logger.info('discord: connecting...');
+    console.log(`${global.infostring}Discord: Connecting...`);
     client.login(process.env.DISCORD_BOT_TOKEN)
       .catch(err => {
-        logger.error('discord: login error');
-        logger.error(err);
+        console.log(`${global.errorstring}Discord: Login error`);
+        console.log(global.errorstring + err);
         process.exit(1);
       });
   },
@@ -139,7 +140,7 @@ myEvents.on('discord_notify', () => {
       const channel = client.channels.cache.get(entry.channel_id);
       // Ensure we have a user and a channel to post to
       if (user && channel) {
-        channel.send(`${user}, The twitter feed for **${entry.screen_name}** has synced and will now be posted to this channel.`).catch(logger.error);
+        channel.send(`${user}, The twitter feed for **${entry.screen_name}** has synced and will now be posted to this channel.`);
       }
     }
   }
@@ -157,25 +158,23 @@ myEvents.on('discord_send', (tweet, str, files) => {
         .filter(c => c && c.permissionsFor(client.user).has('SEND_MESSAGES'))
         .map(c => channelSend(c, str, files));
       if (channels.length === 0) {
-        logger.info(`TWEET: ${tweet.id_str}: No valid Discord channel(s) found to post to. ${data.channels.length} registered`);
+        console.log(`${global.infostring}Tweet: ${tweet.id_str}: No valid Discord channel(s) found to post to. ${data.channels.length} registered`);
         return;
       }
       // Send to Discord channels
       utils.promiseSome(channels)
         .then(promiseResults => {
-          logger.info(`TWEET: ${tweet.id_str}: Posted to ${promiseResults.filter(x => x).length}/${data.channels.length} Discord channel(s)`);
+          console.log(`${global.infostring}Tweet: ${tweet.id_str}: Posted to ${promiseResults.filter(x => x).length}/${data.channels.length} Discord channel(s)`);
           const entry = new PostsModel({
             tweet_id: tweet.id_str,
             messages: promiseResults,
           });
-          entry.save().catch(logger.error);
+          entry.save();
           // Remove the temp directory we made for converting gifs if it exists
           rimraf(path.join(process.env.TEMP, `tweet-${tweet.id_str}`), () => {
           });
-        })
-        .catch(logger.error);
-    })
-    .catch(logger.error);
+        });
+    });
 });
 
 function channelSend(channel, str, files) {
@@ -187,25 +186,32 @@ function channelSend(channel, str, files) {
 }
 
 function checkForStaleRecords() {
-  logger.debug('checking for stale feed records');
+  if (debugmessage == true) {
+    console.log(`${global.debugstring}Checking for stale feed records`);
+  }
   FeedsModel.find()
     .then(records => {
-      logger.debug(`${records.length} total results`);
+      if (debugmessage == true) {
+        console.log(`${global.debugstring}${records.length} total results`);
+      }
       let removedRecords = 0;
       let removedChannels = 0;
       records.forEach(record => {
         // Remove record if there have been no channels registered to it for over 3 days
         if ((!record.channels || record.channels.length === 0) && moment(record.modified_on).add(3, 'd') < moment()) {
-          logger.debug(`record has no or 0 channels for over 3 days, removing record: ${record.screen_name}`);
+          if (debugmessage == true) {
+            console.log(`${global.debugstring}Record has no or 0 channels for over 3 days, removing record: ${record.screen_name}`);
+          }
           removedRecords++;
           record.remove()
             .then(() => {
-              logger.debug(`record removed: ${record.screen_name}`);
-            })
-            .catch(logger.error);
+              if (debugmessage == true) {
+                console.log(`${global.debugstring}Record removed: ${record.screen_name}`);
+              }
+            });
           return;
         }
-        logger.silly(`checking channels for: ${record.screen_name}`);
+        console.log(`${global.infostring}Checking channels for: ${record.screen_name}`);
         // Loop through the registered channels and ensure they still exist
         // and have send permissions at a minimum
         const validChannels = [];
@@ -219,46 +225,59 @@ function checkForStaleRecords() {
           }
           const guild = client.guilds.cache.get(x.guild_id);
           if (!guild || !guild.available) {
-            logger.debug(`the guild ${x.guild_id} does not exist or is unavailable`);
+            if (debugmessage == true) {
+              console.log(`${global.debugstring}The guild ${x.guild_id} does not exist or is unavailable`);
+            }
             return;
           }
           const channel = client.channels.cache.get(x.channel_id);
           if (!channel || !channel.permissionsFor(client.user).has('SEND_MESSAGES')) {
-            logger.debug(`the channel ${x.channel_id} does not exist or is unavailable`);
+            if (debugmessage == true) {
+              console.log(`${global.debugstring}The channel ${x.channel_id} does not exist or is unavailable`);
+            }
             return;
           }
           validChannels.push(x);
         });
         if (validChannels.length === 0) {
           // There are no valid channels left
-          logger.debug(`no channels left for this record after validating accessibility, removing record: ${record.screen_name}`);
+          if (debugmessage == true) {
+            console.log(`${global.debugstring}No channels left for this record after validating accessibility, removing record: ${record.screen_name}`);
+          }
           removedRecords++;
           record.remove()
             .then(() => {
-              logger.debug(`record removed: ${record.screen_name}`);
-            })
-            .catch(logger.error);
+              if (debugmessage == true) {
+                console.log(`${global.debugstring}Record removed: ${record.screen_name}`);
+              }
+            });
           return;
         }
         // See if the amount of valid channels has changed
         if (record.channels.length !== validChannels.length) {
           const diff = record.channels.length - validChannels.length;
           // Update the record with the valid channels
-          logger.debug(`updating record - minus ${diff} channels`);
+          if (debugmessage == true) {
+            console.log(`${global.debugstring}Updating record - minus ${diff} channels`);
+          }
           removedChannels += diff;
           const entry = FeedsModel(record);
           entry.channels = validChannels;
           entry.save({ upsert: true })
             .then(() => {
-              logger.debug(`record updated: ${record.screen_name}`);
-            }).catch(logger.error);
+              if (debugmessage == true) {
+                console.log(`${global.debugstring}Record updated: ${record.screen_name}`);
+              }
+            });
         }
       });
       if (removedRecords === 0 && removedChannels === 0) {
-        logger.debug('no stale records');
+        if (debugmessage == true) {
+          console.log(`${global.debugstring}No stale records`);
+        }
         return;
       }
-      logger.info(`Removed ${removedRecords} stale record(s) and ${removedChannels} stale channel(s) from the database`);
+      console.log(`${global.infostring}Removed ${removedRecords} stale record(s) and ${removedChannels} stale channel(s) from the database`);
       state.reload = true;
     });
 }

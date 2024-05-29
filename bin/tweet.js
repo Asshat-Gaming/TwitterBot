@@ -5,23 +5,28 @@ const path = require('path');
 const { decode } = require('html-entities');
 const fetch = require('node-fetch');
 const { exec } = require('child_process');
-const logger = require('./logger');
 const utils = require('./utils');
 const state = require('./state');
 const myEvents = require('./events');
 
-logger.debug('Loading tweetHandler.js');
+if (debugmessage == true) {
+  console.log(`${global.debugstring}Loading tweetHandler.js`);
+}
 
 const recentTweets = [];
 
 // Process tweets
 module.exports = (tweet, manual) => {
-  logger.debug(`TWEET: ${tweet.id_str}: https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`);
+  if (debugmessage == true) {
+    console.log(`${global.debugstring}Tweet: ${tweet.id_str}: https://www.twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`);
+  }
 
   // Exit if tweet is not authored by a registered user we are currently streaming
   // This covers most re-tweets and replies unless from  another registered user
   if (!state.ids.includes(tweet.user.id_str)) {
-    logger.debug(`TWEET: ${tweet.id_str}: Authored by an unregistered user. Exiting.`);
+    if (debugmessage == true) {
+      console.log(`${global.debugstring}Tweet: ${tweet.id_str}: Authored by an unregistered user. Exiting.`);
+    }
     return;
   }
 
@@ -30,7 +35,9 @@ module.exports = (tweet, manual) => {
   // Manual posts bypass this check
   if (!manual) {
     if (recentTweets.includes(tweet.id_str)) {
-      logger.debug(`TWEET: ${tweet.id_str}: Was recently processed. Duplicate? Exiting.`);
+      if (debugmessage == true) {
+        console.log(`${global.debugstring}Tweet: ${tweet.id_str}: Was recently processed. Duplicate? Exiting.`);
+      }
       return;
     }
     recentTweets.push(tweet.id_str);
@@ -43,13 +50,17 @@ module.exports = (tweet, manual) => {
   // These are flushed after a months time daily
   if (process.env.NODE_ENV === 'development') {
     const filepath = `./tweets/${tweet.user.screen_name}-${tweet.id_str}${manual ? '-man' : ''}.json`;
-    logger.debug(`storing tweet JSON to: ${filepath}`);
+    if (debugmessage == true) {
+      console.log(`${global.debugstring}Storing tweet JSON to: ${filepath}`);
+    }
     fs.writeFileSync(filepath, JSON.stringify(tweet, null, 2), { encoding: 'utf8' });
   }
 
   // Exit if tweet is a reply not from the same user. ie in a thread
   if (tweet.in_reply_to_user_id_str && tweet.in_reply_to_user_id_str !== tweet.user.id_str) {
-    logger.debug(`TWEET: ${tweet.id_str}: Non-self reply. Exiting.`);
+    if (debugmessage == true) {
+      console.log(`${global.debugstring}Tweet: ${tweet.id_str}: Non-self reply. Exiting.`);
+    }
     return;
   }
 
@@ -73,11 +84,13 @@ module.exports = (tweet, manual) => {
   }
 
   if (text.startsWith('@')) {
-    logger.debug(`TWEET: ${tweet.id_str}: @ reply. Exiting.`);
+    if (debugmessage == true) {
+      console.log(`${global.debugstring}Tweet: ${tweet.id_str}: @ reply. Exiting.`);
+    }
     return;
   }
 
-  logger.info(`TWEET: ${tweet.id_str}: https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`);
+  console.log(`${global.infostring}Tweet: ${tweet.id_str}: https://www.twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`);
 
   // Decode html entities in the twitter text string so they appear correctly (&amp)
   let modifiedText = decode(text);
@@ -126,7 +139,7 @@ module.exports = (tweet, manual) => {
 
   // Create a new string to send to Discord
   let str = `\`\`\`qml\nNew Tweet from ${tweet.user.screen_name}:\`\`\``
-    + `<https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}>\n`;
+    + `<https://www.twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}>\n`;
   if (modifiedText) {
     let nameRT;
     if (tweet.retweeted_status) nameRT = tweet.retweeted_status.user.screen_name;
@@ -153,7 +166,7 @@ module.exports = (tweet, manual) => {
       myEvents.emit('discord_send', tweet, str, files);
     })
     .catch(err => {
-      logger.error(err);
+      console.log(err);
       // Send the string to the Discord Client regardless that the media promise failed
       // This should not occur if a single media element fails but due to a greater internal concern
       // as promiseSome does not reject on a single promise rejection unlike Promise.All
@@ -228,12 +241,12 @@ function createFrames(data) {
   });
 }
 
-// Use GraphicsMagik to convert frames into a gif
+// Use ImageMagick to convert frames into a gif
 function createGIF(data) {
   return new Promise((resolve, reject) => {
     const frames = data.framesPath.replace('ffout%03d.png', 'ffout*.png');
     const location = path.join(data.tempDirectory, 'video.gif');
-    exec(`gm convert -loop 0 "${frames}" "${location}"`,
+    exec(`magick convert -loop 0 "${frames}" "${location}"`,
       (err) => {
         if (err) {
           reject(err);

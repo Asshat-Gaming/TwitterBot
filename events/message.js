@@ -7,7 +7,7 @@ const reportedChannels = new Set();
 
 module.exports = async (bot, message) => {
 	if (message.channel.type === 'news') {
-		const { config, plogger, options: { http }, rest } = bot;
+		const { config, options: { http }, rest } = bot;
 		const { channel, guild, author } = message;
 
 		const consoleWarn = async (event) => {
@@ -37,11 +37,11 @@ module.exports = async (bot, message) => {
 				addAsset('channel', 'server');
 				break;
 			default:
-				plogger.log('Invalid consoleWarn() instance!', 'error');
+				console.log(`${global.errorstring}Invalid consoleWarn() instance!`);
 				return;
 			}
 
-			plogger.log(entry, 'warn');
+			console.log(global.warnstring + entry);
 		};
 
 		// Reports a rate limited channel in console, sends a DM to the bot owner if spam is above the threshold
@@ -54,7 +54,7 @@ module.exports = async (bot, message) => {
 					.then((user) => {
 						user.send(`**Spam channel report**\n\nChannel: #${channel.name} (${channel.id})\nServer: "${guild.name}" (${guild.id}), owner: ${owner.username}#${owner.discriminator} (${owner.id})`);
 					})
-					.catch((error) => plogger.log(error, 'error'));
+					.catch((error) => console.log(global.errorstring + error));
 
 				reportedChannels.add(channel.id);
 			}
@@ -83,13 +83,15 @@ module.exports = async (bot, message) => {
 
 					setTimeout(() => {
 						rateLimits.delete(channel.id);
-						plogger.log(`Rate limit counter reset for ${channel.id}`, 'debug');
+                        if (debugmessage == true) {
+						  console.log(`${global.debugstring}Rate limit counter reset for ${channel.id}`);
+                        }
 					}, json.retry_after);
 
 					consoleWarn('rateLimited');
 				}
 				else {
-					plogger.log(`Published ${message.id} in #${channel.name} (${channel.id}) - "${guild.name}" (${guild.id})`);
+					console.log(`${global.infostring}Published ${message.id} in #${channel.name} (${channel.id}) - "${guild.name}" (${guild.id})`);
 				}
 			});
 	}

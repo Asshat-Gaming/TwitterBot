@@ -2,7 +2,6 @@
 
 const Twit = require('twit');
 const { get } = require('lodash');
-const logger = require('./logger');
 const state = require('./state');
 const FeedsModel = require('./models/feeds');
 const tweet = require('./tweet');
@@ -22,30 +21,40 @@ const client = new Twit({
 // Checked every 5 minutes
 setInterval(() => {
   if (!state.reload) return;
-  logger.debug('triggering twitter client reconnect due to reload flag');
-  logger.info('Scheduled restart of Twitter Client');
+  if (debugmessage == true) {
+    console.log(`${global.debugstring}Triggering twitter client reconnect due to reload flag`);
+  }
+  console.log(`${global.infostring}Scheduled restart of Twitter Client`);
   connect();
 }, 1000 * 60 * 5);
 
 // Connect and start streaming from the Twitter Stream API
 function connect() {
-  logger.debug('starting twitter connect');
+  if (debugmessage == true) {
+    console.log(`${global.debugstring}Starting twitter connect`);
+  }
   // Reset the reload state to false as we are connecting / reconnecting
   state.reload = false;
   // Destroy any existing stream before creating a new one
   if (client && client.stream && client.stream.destroy) client.stream.destroy();
   // Get all the registered twitter channel ids we need to connect to
-  logger.debug('getting channels from the mongodb');
+  if (debugmessage == true) {
+    console.log(`${global.debugstring}Getting channels from the mongodb`);
+  }
   FeedsModel.find()
     .then(feeds => {
-      logger.debug(`total # of twitter feeds records: ${feeds.length}`);
+      if (debugmessage == true) {
+        console.log(`${global.debugstring}Total number of twitter feeds records: ${feeds.length}`);
+      }
       // Store the currently streamed ids
       state.ids = feeds.map(x => x.twitter_id);
       if (state.ids.length === 0) {
-        logger.debug('there are no twitterChannels registered in the mongodb. no need to connect to twitter');
+        if (debugmessage == true) {
+          console.log(`${global.debugstring}There are no twitterChannels registered in the mongodb. no need to connect to twitter`);
+        }
         return;
       }
-      logger.info('twitter: connecting...');
+      console.log(`${global.infostring}Twitter: connecting...`);
       // Stream tweets
       client.stream('statuses/filter', {
         follow: state.ids,
@@ -56,14 +65,16 @@ function connect() {
         .on('error', error);
     })
     .catch(err => {
-      logger.error('error reading from mongodb FeedsModel');
-      logger.error(err);
+      console.log(`${global.errorstring}Error reading from mongodb FeedsModel`);
+      if (debugmessage == true) {
+        console.log(global.debugstring + err);
+      }
     });
 }
 
 function connected() {
   myEvents.emit('discord_notify');
-  logger.info('twitter: connection success');
+  console.log(`${global.infostring}Twitter: connection success`);
 }
 
 myEvents.on('manual_post', data => {
@@ -77,7 +88,9 @@ function error(err) {
 module.exports = {
   connect,
   getUser: screenName => new Promise((resolve, reject) => {
-    logger.debug(`lookup user: ${screenName}`);
+    if (debugmessage == true) {
+      console.log(`${global.debugstring}Lookup user: ${screenName}`);
+    }
     client.get('users/lookup', { screen_name: screenName })
       .then(res => {
         resolve(get(res, 'data[0]', null));
@@ -92,7 +105,9 @@ module.exports = {
   }),
 
   getTweet: id => new Promise((resolve, reject) => {
-    logger.debug(`manually looking up tweet: ${id}`);
+    if (debugmessage == true) {
+      console.log(`${global.debugstring}Manually looking up tweet: ${id}`);
+    }
     client.get('statuses/show', { id, tweet_mode: 'extended' })
       .then(response => resolve(response.data))
       .catch(reject);

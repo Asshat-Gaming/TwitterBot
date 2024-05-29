@@ -2,12 +2,13 @@
 
 const fetch = require('node-fetch');
 const PostsModel = require('./models/posts');
-const logger = require('./logger');
 
 module.exports = tweet => {
-  logger.info(`TWEET: ${tweet.delete.status.id_str}: DELETED`);
+  console.log(`${global.infostring}TWEET: ${tweet.delete.status.id_str}: DELETED`);
   if (!tweet || !tweet.delete || !tweet.delete.status) return;
-  logger.debug(`TWEET: ${tweet.delete.status.id_str}: Processing deletion...`);
+  if (debugmessage == true) {
+    console.log(`${global.debugstring}TWEET: ${tweet.delete.status.id_str}: Processing deletion...`);
+  }
   // Find a matching record for the tweet id
   PostsModel.find({ tweet_id: tweet.delete.status.id_str })
     .then(results => {
@@ -18,7 +19,9 @@ module.exports = tweet => {
           .forEach(msg => {
             // Send a DELETE request to Discord api directly for each message we want to delete
             const uri = `https://discordapp.com/api/channels/${msg.channel_id}/messages/${msg.message_id}`;
-            logger.debug(uri);
+            if (debugmessage == true) {
+              console.log(global.debugstring + uri);
+            }
             fetch(uri, {
               method: 'DELETE',
               headers: {
@@ -26,11 +29,11 @@ module.exports = tweet => {
               },
             })
               .then(() => {
-                logger.debug('discord twitter post message delete OK');
-              })
-              .catch(logger.error);
+                if (debugmessage == true) {
+                  console.log(`${global.debugstring}Discord twitter post message delete OK`);
+                }
+              });
           });
       });
     })
-    .catch(logger.error);
 };

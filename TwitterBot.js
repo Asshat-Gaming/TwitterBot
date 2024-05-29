@@ -2,11 +2,16 @@
 
 const fs = require('fs');
 const commandExistsSync = require('command-exists').sync;
-const logger = require('./bin/logger');
 const version = require('./package.json').version;
 require('dotenv').config({ path: './.env' });
+global.colors = require ('colors');
+global.errorstring = '[ERROR] '.red + ' '.white;
+global.warnstring = '[WARNING] '.magenta + ' '.white;
+global.infostring = '[INFO] '.yellow + ' '.white;
+global.debugstring = '[DEBUG] '.gray + ' '.white;
+global.debugmessage = false;
 
-logger.info(`Starting the twitter-to-discord application v${version}`);
+console.log(`${global.infostring}Starting the twitter-to-discord application v${version}`);
 
 // Extract all the env variables we will be using
 const {
@@ -23,9 +28,9 @@ const {
 
 // Exit if the env variable was not set or passed. None can be empty
 function envTest(value, name) {
-  logger.debug(`${name}=${value}`);
+  var name=value;
   if (!value) {
-    logger.error(`Missing the environment variable '${name}'`);
+    console.log(`${global.errorstring}Missing the environment variable '${name}'`);
     process.exit(1);
   }
 }
@@ -40,24 +45,24 @@ envTest(DISCORD_CMD_PREFIX, 'DISCORD_CMD_PREFIX');
 envTest(DISCORD_BOT_OWNER_ID, 'DISCORD_BOT_OWNER_ID');
 envTest(TEMP, 'TEMP');
 
-process.env.TEMP = 'INSERT-TEMP-PATH-HERE';
+process.env.TEMP = 'C:/Windows/TEMP';
 
 // Ensure we can access the temp directory
 try {
   fs.accessSync(process.env.TEMP, fs.constants.F_OK);
 } catch (err) {
-  logger.error(`Unable to access the temp directory: ${process.env.TEMP}`);
-  logger.debug(err);
+  console.log(`${global.errorstring}Unable to access the temp directory: ${process.env.TEMP}`);
+  console.log(global.errorstring + err);
   process.exit(1);
 }
 
 // Ensure all the commands we need to function exist via PATH
 if (!commandExistsSync('ffmpeg')) {
-  logger.error('\'ffmpeg\' is not available on the command line');
+  console.log(`${global.errorstring}\'ffmpeg\' is not available on the command line`);
   process.exit(1);
 }
-if (!commandExistsSync('gm')) {
-  logger.error('\'gm\' is not available on the command line');
+if (!commandExistsSync('magick')) {
+  console.log(`${global.errorstring}\'magick\' is not available on the command line`);
   process.exit(1);
 }
 
