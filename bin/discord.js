@@ -55,7 +55,7 @@ client.on('warn', info => {
 
 // Discord is reconnecting
 client.on('shardReconnecting', id => {
-  console.log(`${global.infostring}Discord: Reconnecting to shared with ID ${id}.`);
+  console.log(`${global.infostring}Discord: Reconnecting to shard with ID ${id += 1}.`);
 });
 
 // Discord has resumed
